@@ -15,8 +15,6 @@ jobs:
   job1:
     name: build_ecr
     runs-on: ubuntu-latest
-    outputs:
-      image-tag: ${{ github.sha }}                      #important! para passar o tag da imagem para o job2
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -45,7 +43,6 @@ jobs:
     env:                                          #important! pra poder aceder aos secrects criados no github
       INSTANCE_KEY: ${{secrets.INSTANCE_KEY}}
       PUBLIC_IP: ${{secrets.PUBLIC_IP}}
-      IMAGE: 635096816538.dkr.ecr.us-east-1.amazonaws.com/site_prod:${{ needs.job1.outputs.image_tag }}
 
     runs-on: ubuntu-latest
 
