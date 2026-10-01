@@ -45,7 +45,7 @@ jobs:
     env:                                          #important! pra poder aceder aos secrects criados no github
       INSTANCE_KEY: ${{secrets.INSTANCE_KEY}}
       PUBLIC_IP: ${{secrets.PUBLIC_IP}}
-      IMAGE: 635096816538.dkr.ecr.us-east-1.amazonaws.com/site_prod:${{ needs.job1.outputs.image_tag }}
+      IMAGE: 635096816538.dkr.ecr.us-east-1.amazonaws.com/site_prod:${{ needs.job1.outputs.image-tag }}
 
     runs-on: ubuntu-latest
 
