@@ -35,3 +35,24 @@ jobs:
           docker tag meu-website:v1.0 635096816538.dkr.ecr.us-east-1.amazonaws.com/site_prod:v1.0
           docker push 635096816538.dkr.ecr.us-east-1.amazonaws.com/site_prod:v1.0
 
+
+  job2:
+    name: deploy_ec2
+
+    env:                    #important! pra poder aceder aos secrects criados no github
+      INSTANCE_KEY: ${{secrets.INSTANCE_KEY}}
+      PUBLIC_IP: ${{secrets.PUBLIC_IP}}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy EC2 SSH
+        run: |
+          echo "$INSTANCE_KEY" > chave-site.pem
+          ssh -i chave-site.pem ec2-user@$PUBLIC_IP << EOF
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 635096816538.dkr.ecr.us-east-1.amazonaws.com
+            docker pull 635096816538.dkr.ecr.us-east-1.amazonaws.com/site_prod:v1.0
+            docker run -d -p 80:80 --name site 635096816538.dkr.ecr.us-east-1.amazonaws.com/site_prod:v1.0
+          EOF
+          rm chave-site.pem
+
