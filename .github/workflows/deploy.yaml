@@ -45,53 +45,20 @@ jobs:
     env:                                          #important! pra poder aceder aos secrects criados no github
       INSTANCE_KEY: ${{secrets.INSTANCE_KEY}}
       PUBLIC_IP: ${{secrets.PUBLIC_IP}}
-      IMAGE: 635096816538.dkr.ecr.us-east-1.amazonaws.com/site_prod:${{ needs.job1.outputs.image-tag }}
+      IMAGE: 635096816538.dkr.ecr.us-east-1.amazonaws.com/site_prod:${{ needs.job1.outputs.image_tag }}
 
     runs-on: ubuntu-latest
 
     steps:
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v6.3.0
-        with:
-          role-to-assume: arn:aws:iam::635096816538:role/GitHubActionsRepoApp
-          aws-region: us-east-1
-
-      - name: Find security group by name
-        id: sg
-        run: |
-          SG_ID=$(aws ec2 describe-security-groups \
-            --filters "Name=group-name,Values=website-sg" \
-            --query "SecurityGroups[0].GroupId" --output text)
-          echo "id=$SG_ID" >> "$GITHUB_OUTPUT"
-
-      - name: Get runner public IP
-        id: runner-ip
-        run: echo "ip=$(curl -s https://checkip.amazonaws.com)/32" >> "$GITHUB_OUTPUT"
-
-      - name: Allow SSH from this runner
-        run: |
-          aws ec2 authorize-security-group-ingress \
-            --group-id ${{ steps.sg.outputs.id }} \
-            --protocol tcp --port 22 \
-            --cidr ${{ steps.runner-ip.outputs.ip }}
-
-      - name: Deploy over SSH
+      - name: Deploy EC2 SSH
         run: |
           echo "$INSTANCE_KEY" > chave-site.pem
           chmod 400 chave-site.pem
-          ssh -i chave-site.pem -o StrictHostKeyChecking=no ec2-user@$PUBLIC_IP "
+          ssh -i chave-site.pem -o StrictHostKeyChecking=no ec2-user@$PUBLIC_IP << EOF
             aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 635096816538.dkr.ecr.us-east-1.amazonaws.com
-            docker pull $IMAGE
-            docker rm -f site 2>/dev/null || true
-            docker run -d -p 80:80 --name site $IMAGE
+            docker pull 635096816538.dkr.ecr.us-east-1.amazonaws.com/site_prod:v1.0
+            docker run -d -p 80:80 --name site 635096816538.dkr.ecr.us-east-1.amazonaws.com/site_prod:v1.0
             docker ps
-          "
+          EOF
           rm chave-site.pem
 
-      - name: Revoke SSH from this runner
-        if: always()
-        run: |
-          aws ec2 revoke-security-group-ingress \
-            --group-id ${{ steps.sg.outputs.id }} \
-            --protocol tcp --port 22 \
-            --cidr ${{ steps.runner-ip.outputs.ip }}
