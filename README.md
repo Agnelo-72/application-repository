@@ -179,6 +179,7 @@ For this project, the focus of this phase is the CI/CD deployment process.
 
 ## Problem Found During Development
 
+(1)
 During development, GitHub Actions could not connect to the EC2 instance.
 
 The problem was not the SSH key.
@@ -205,3 +206,22 @@ This was an important lesson about the difference between:
 
 - **SSH authentication** – checking the SSH key.
 - **Network access** – checking whether the Security Group allows the connection.
+
+(2)
+After changing the website and pushing a new version, the CI/CD pipeline successfully built and pushed the new Docker image to ECR.
+
+However, the deployment failed when starting the new container:
+```bash
+Conflict. The container name "/site" is already in use
+```
+
+The previous container was still running on the EC2 instance. Docker does not allow two containers to use the same name.
+
+I fixed this by stopping and removing the existing container before starting the new one:
+```bash
+...
+docker stop site || true
+docker rm site || true
+docker run ...
+```
+This allows the pipeline to replace the old container with the new version after every deployment.
