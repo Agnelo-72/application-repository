@@ -6,7 +6,7 @@ I implement a CI/CD pipeline using GitHub Actions to automate the build of the s
 
 This is the piece that closes the loop: [`infra-as-code`](https://github.com/Agnelo-72/infra-as-code) provisions the EC2 instance and ECR repository with Terraform, and this repo gets the site actually running on them.
 
-## What it does
+## What it does?
 
 ```text
 Push to main
